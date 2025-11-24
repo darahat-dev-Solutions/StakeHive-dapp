@@ -1,0 +1,4 @@
+const navigation_vue_vue_type_style_index_0_lang = ":root{--hive-dark:#1a202c;--hive-dark-light:#2d3748;--hive-primary:#4f46e5;--hive-primary-dark:#4338ca;--hive-accent:#10b981}.bg-hive-dark{background-color:var(--hive-dark)}.bg-hive-dark-light{background-color:var(--hive-dark-light)}.bg-hive-primary{background-color:var(--hive-primary)}.bg-hive-primary-dark{background-color:var(--hive-primary-dark)}.text-hive-primary{color:var(--hive-primary)}.text-hive-accent{color:var(--hive-accent)}.hover\\:bg-hive-dark-light:hover{background-color:var(--hive-dark-light)}.hover\\:bg-hive-dark:hover{background-color:var(--hive-dark)}.border-hive-dark{border-color:var(--hive-dark)}";
+
+export { navigation_vue_vue_type_style_index_0_lang as n };
+//# sourceMappingURL=navigation-styles-1.mjs-Dmgfgr7z.mjs.map
