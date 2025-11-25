@@ -1,7 +1,7 @@
 import { ethers } from 'ethers';
 import { defineStore } from 'pinia';
 // import contract.js
-import { ERC20_ABI, HIVE_TOKEN_ADDRESS, STAKE_HIVE_ABI, STAKE_HIVE_ADDRESS } from '@/utils/contract.js';
+import { ERC20_ABI, HIVE_TOKEN_ADDRESS, STAKE_HIVE_ABI, STAKE_HIVE_ADDRESS, getAddressesForChain } from '@/utils/contract.js';
 
 export const useWalletStore = defineStore('wallet', {
 
@@ -59,8 +59,20 @@ export const useWalletStore = defineStore('wallet', {
         const web3Provider = $web3Provider.provider;
         const getNetWorkInfo = await web3Provider.getNetwork();
         this.provider = web3Provider;
-        this.chainId = getNetWorkInfo.chainId; // Access raw value
+        this.chainId = Number(getNetWorkInfo.chainId); // Ensure number
         this.netWorkName = getNetWorkInfo.name; // Access raw value
+        
+        // Dynamically update contract addresses based on chain
+        const addrMap = getAddressesForChain(this.chainId);
+        console.log(`🔗 Connected to chain ${this.chainId} (${this.netWorkName})`);
+        console.log(`📍 Using addresses:`, addrMap);
+        
+        if (addrMap) {
+          this.tokenContracts.HIVE.address = addrMap.HIVE_TOKEN;
+          this.stakeHiveContracts.STAKEHIVE.address = addrMap.STAKE_HIVE;
+          console.log(`✅ Updated HIVE token address to: ${addrMap.HIVE_TOKEN}`);
+          console.log(`✅ Updated StakeHive farm address to: ${addrMap.STAKE_HIVE}`);
+        }
         const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' });
         this.account = accounts[0];
         this.isConnected = this.account.length > 0;
@@ -97,6 +109,21 @@ export const useWalletStore = defineStore('wallet', {
       
        try {
          const tokenInfo = this.tokenContracts.HIVE;
+         console.log(`💰 Fetching balance from HIVE token at: ${tokenInfo.address}`);
+         console.log(`👤 For account: ${this.account}`);
+         
+         if (!web3Provider) {
+           console.warn('⚠️ Provider not initialized');
+           return;
+         }
+         
+         const code = await web3Provider.getCode(tokenInfo.address);
+         if (code === '0x') {
+           console.error(`❌ No contract code at ${tokenInfo.address} on chain ${this.chainId}. Check network or address.`);
+           this.tokenBalance = 'N/A';
+           return;
+         }
+         console.log(`✅ Contract found at ${tokenInfo.address}`);
          
         //create  contract instance
         //  const tokenContract = new ethers.Contract(tokenInfo.address, tokenInfo.abi, this.signer);
@@ -106,8 +133,9 @@ export const useWalletStore = defineStore('wallet', {
         // console.log("tokenContract", tokenContract);
 
         const rawBalance = await tokenContract.balanceOf(this.account);
+         console.log(`📊 Raw balance (wei): ${rawBalance.toString()}`);
          this.tokenBalance = ethers.formatEther(rawBalance);
-        // console.log("rawBalance", this.tokenBalance);
+         console.log(`💵 Formatted token balance: ${this.tokenBalance} HIVE`);
 
 
          
@@ -115,6 +143,7 @@ export const useWalletStore = defineStore('wallet', {
          
       } catch (error) {
         console.error("Error fetching token balance:", error);
+        this.tokenBalance = '0';
       }
     },
  async fetchStakingHistory() {

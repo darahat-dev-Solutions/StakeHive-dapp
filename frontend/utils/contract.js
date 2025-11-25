@@ -1,8 +1,39 @@
-// StakeHiveFarm deployed to 
-// Localhost: StakeHiveFarm deployed to (local Hardhat node)
-export const STAKE_HIVE_ADDRESS = '0x0165878A594ca255338adfa4d48449f69242Eb8F';
-// Localhost: HiveToken deployed to (local Hardhat node)
-export const HIVE_TOKEN_ADDRESS = '0x5FC8d32690cc91D4c39d9d3abcBD16989F875707';
+/**
+ * ⚠️ CRITICAL: CONTRACT ADDRESS MAPPING ⚠️
+ * 
+ * These addresses are HARDCODED and network-specific.
+ * The dApp automatically selects the correct addresses based on your connected network's Chain ID.
+ * 
+ * 🔴 IMPORTANT FOR DEVELOPERS:
+ * - If you run `npx hardhat run scripts/deploy.js --network <network>`, 
+ *   NEW contracts will be deployed with DIFFERENT addresses.
+ * - You MUST update this ADDRESS_MAP after deploying new contracts.
+ * 
+ * 🟢 RECOMMENDED APPROACH:
+ * - Use: `npx hardhat run scripts/deploy-and-update.js --network <network>`
+ * - This will automatically update these addresses after deployment.
+ * 
+ * 📍 Current Deployments:
+ * - Chain 31337 (Hardhat Local): Ephemeral addresses, reset on each run
+ * - Chain 11155111 (Sepolia Testnet): Production testnet deployment
+ * 
+ * To manually update addresses:
+ *   node scripts/update-addresses.js <chainId> <hiveToken> <stakeFarm>
+ */
+export const ADDRESS_MAP = {
+  31337: {
+    HIVE_TOKEN: '0x5FbDB2315678afecb367f032d93F642f64180aa3',
+    STAKE_HIVE: '0xe7f1725E7734CE288F8367e1Bb143E90bb3F0512'
+  },
+  11155111: {
+    HIVE_TOKEN: '0x359863fB0ca4E4be77daD9dFFBB0BbdA94690cCC',
+    STAKE_HIVE: '0x3531D47A28Aa87Bd5F9eaD3D2d8Fe07Ce16C8DDc'
+  }
+};
+
+// Default export (fallback to Hardhat addresses if chainId not yet known)
+export const STAKE_HIVE_ADDRESS = ADDRESS_MAP[31337].STAKE_HIVE;
+export const HIVE_TOKEN_ADDRESS = ADDRESS_MAP[31337].HIVE_TOKEN;
 
 export const STAKE_HIVE_ABI = [
     // Only relevant functions for frontend
@@ -34,3 +65,6 @@ const HIVE_TOKEN_ABI = [ // Minimum ABI for transfer
   "function decimals() public view returns (uint8)"
 ];
 
+export function getAddressesForChain(chainId) {
+  return ADDRESS_MAP[chainId] || ADDRESS_MAP[31337];
+}
