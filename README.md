@@ -212,11 +212,14 @@ Want to just test the dApp without deploying? Use the pre-deployed contracts:
 git clone https://github.com/Darahat/stakehive-dapp.git
 cd stakehive-dapp
 
-# 2. Install frontend dependencies
+# 2. Install Web3 dependencies
+npm install
+
+# 3. Install frontend dependencies
 cd frontend
 npm install
 
-# 3. Run the frontend
+# 4. Run the frontend
 npm run dev
 ```
 
@@ -240,18 +243,38 @@ cd stakehive-dapp
 
 # 2. Install dependencies for backend and frontend
 npm install
-cd frontend && npm install && cd ..
+cd frontend
+npm install
+cd ..
 
-# 3. Setup environment variables
-cp .env.example .env
-# Edit .env with your Sepolia RPC URL and wallet PRIVATE_KEY
+# 3. Start local blockchain (in a separate terminal)
+# Open a new terminal and run:
+npx hardhat node
+# Keep this terminal running
+
+# 4. Deploy contracts to localhost (in your main terminal)
+npx hardhat run scripts/deploy-and-update.js --network localhost
+
+# Note: No .env file needed for localhost! Only required for Sepolia testnet deployment
+
+# 5. Run the frontend
+cd frontend
+npm run dev
+
 ```
 
-**Environment Variables (.env)**:
+**Environment Variables (.env)** - Only needed for Sepolia deployment:
 
-```env
+```bash
+# Create .env file only if deploying to Sepolia testnet
+cp .env.example .env
+
+# Then edit .env with:
 SEPOLIA_RPC_URL=https://eth-sepolia.g.alchemy.com/v2/YOUR_API_KEY
 PRIVATE_KEY=your_wallet_private_key_without_0x
+
+# Deploy to Sepolia:
+npx hardhat run scripts/deploy-and-update.js --network sepolia
 ```
 
 ---
