@@ -194,7 +194,44 @@ F[Users] --> A
 
 ## 📦 Getting Started
 
-Follow these steps to run the project locally and test your own deployment:
+### Prerequisites
+
+- Node.js v16+ and npm
+- MetaMask or compatible Web3 wallet
+- Sepolia testnet ETH (from faucet)
+- Git
+
+---
+
+### 🚀 Quick Start (Testing Only)
+
+Want to just test the dApp without deploying? Use the pre-deployed contracts:
+
+```bash
+# 1. Clone the repo
+git clone https://github.com/Darahat/stakehive-dapp.git
+cd stakehive-dapp
+
+# 2. Install frontend dependencies
+cd frontend
+npm install
+
+# 3. Run the frontend
+npm run dev
+```
+
+The dApp is pre-configured with deployed Sepolia contracts:
+
+- **HiveToken**: `0x359863fB0ca4E4be77daD9dFFBB0BbdA94690cCC`
+- **StakeHiveFarm**: `0x3531D47A28Aa87Bd5F9eaD3D2d8Fe07Ce16C8DDc`
+
+Just connect your wallet and you're ready to go! 🎉
+
+---
+
+### 🛠️ Full Development Setup
+
+For developers who want to deploy their own contracts:
 
 ```bash
 # 1. Clone the repo
@@ -203,76 +240,209 @@ cd stakehive-dapp
 
 # 2. Install dependencies for backend and frontend
 npm install
-cd frontend && npm install
+cd frontend && npm install && cd ..
 
 # 3. Setup environment variables
 cp .env.example .env
 # Edit .env with your Sepolia RPC URL and wallet PRIVATE_KEY
 ```
 
-### 🔴 **IMPORTANT: Contract Address Management**
+**Environment Variables (.env)**:
 
-The project uses **dynamic address mapping** based on network chain ID. Contract addresses are **hardcoded** in `frontend/utils/contract.js`:
-
-- **Chain 31337 (Hardhat Local)**: Ephemeral addresses that change with each deployment
-- **Chain 11155111 (Sepolia)**: Production testnet addresses
-
-#### **Option A: Use Existing Deployed Contracts (Recommended for Testing)**
-
-The frontend is pre-configured with deployed Sepolia contracts:
-
-- HiveToken: `0x359863fB0ca4E4be77daD9dFFBB0BbdA94690cCC`
-- StakeHiveFarm: `0x3531D47A28Aa87Bd5F9eaD3D2d8Fe07Ce16C8DDc`
-
-Just run the frontend:
-
-```bash
-cd frontend
-npm run dev
+```env
+SEPOLIA_RPC_URL=https://eth-sepolia.g.alchemy.com/v2/YOUR_API_KEY
+PRIVATE_KEY=your_wallet_private_key_without_0x
 ```
 
-#### **Option B: Deploy Your Own Contracts**
+---
 
-⚠️ **WARNING**: Deploying new contracts will create **different addresses**. You **MUST** update `frontend/utils/contract.js` manually.
+### 🔴 **CRITICAL: Understanding Contract Addresses**
 
-```bash
-# For local development:
-npx hardhat node  # Keep this running
-# In another terminal:
-npx hardhat run scripts/deploy.js --network localhost
+The project uses **dynamic address mapping** based on network chain ID. Contract addresses are stored in `frontend/utils/contract.js`:
 
-# For Sepolia testnet:
-npx hardhat run scripts/deploy.js --network sepolia
+```javascript
+export const ADDRESS_MAP = {
+  31337: {
+    // Hardhat Local Network
+    HIVE_TOKEN: "0x5FbDB2315678afecb367f032d93F642f64180aa3",
+    STAKE_HIVE: "0xe7f1725E7734CE288F8367e1Bb143E90bb3F0512",
+  },
+  11155111: {
+    // Sepolia Testnet
+    HIVE_TOKEN: "0x359863fB0ca4E4be77daD9dFFBB0BbdA94690cCC",
+    STAKE_HIVE: "0x3531D47A28Aa87Bd5F9eaD3D2d8Fe07Ce16C8DDc",
+  },
+};
 ```
 
-**After deployment, you MUST:**
+When you connect MetaMask, the dApp automatically:
 
-1. Copy the printed contract addresses from console output
-2. Update `frontend/utils/contract.js` → `ADDRESS_MAP[chainId]` with new addresses
-3. Restart the frontend
-4. Import the new HiveToken address to MetaMask
-5. Transfer tokens to your account:
-   ```bash
-   # Edit scripts/transfer-tokens.js with your address and new token address
-   npx hardhat run scripts/transfer-tokens.js --network sepolia
-   ```
+1. Detects your network's chain ID
+2. Loads the correct contract addresses for that chain
+3. Queries those contracts for balances and data
+
+**⚠️ Important**: Running deployment scripts creates **NEW** contracts with **NEW** addresses. The frontend must be updated with these new addresses.
+
+---
+
+### 🟢 Option A: Automated Deployment (Recommended)
+
+Use this script that automatically updates frontend addresses:
 
 ```bash
-# 5. Run the frontend
+# Deploy to Sepolia and auto-update frontend
+npx hardhat run scripts/deploy-and-update.js --network sepolia
+
+# Or for local Hardhat network:
+npx hardhat node  # Terminal 1 - keep running
+npx hardhat run scripts/deploy-and-update.js --network localhost  # Terminal 2
+```
+
+**What this does:**
+
+1. ✅ Deploys HiveToken
+2. ✅ Deploys StakeHiveFarm
+3. ✅ Transfers tokens to farm
+4. ✅ Sets reward rate
+5. ✅ **Automatically updates `frontend/utils/contract.js`**
+6. ✅ Prints new addresses and next steps
+
+**After automated deployment:**
+
+```bash
+# 1. Import new token to MetaMask with printed address
+# 2. Transfer tokens to your wallet (update recipient address in script first)
+npx hardhat run scripts/transfer-tokens.js --network sepolia
+
+# 3. Start the frontend
 cd frontend
 npm run dev
 ```
 
 ---
 
-## 🔍 Usage Notes
+### 🔴 Option B: Manual Deployment (Not Recommended)
 
-- **Wallet Connection**: MetaMask or compatible wallets are required. If MetaMask is not detected, the app prompts with a styled popup to install it.
-- **Token Balances**: The HIVE token balance is shown dynamically, fetched from the blockchain.
-- **Staking Limits**: The amount you can stake is limited by your current HIVE token balance.
-- **Gas Fees**: The app is optimized for gas efficiency but you will still need testnet ETH for transactions.
-- **Token Transfer**: Transfers are peer-to-peer and verified on-chain; tokens sent will reflect on the recipient's wallet.
-- **Real-Time UI**: Vue watchers ensure balances, rewards, and staking statuses update automatically without manual refresh.
+If you prefer manual control:
+
+```bash
+# Deploy contracts
+npx hardhat run scripts/deploy.js --network sepolia
+```
+
+**⚠️ You MUST manually update addresses after this!**
+
+**Method 1: Use the address update script**
+
+```bash
+node scripts/update-addresses.js <chainId> <hiveTokenAddress> <stakeHiveFarmAddress>
+
+# Example:
+node scripts/update-addresses.js 11155111 0x123... 0x456...
+```
+
+**Method 2: Manually edit `frontend/utils/contract.js`**
+
+Open `frontend/utils/contract.js` and update the ADDRESS_MAP:
+
+```javascript
+export const ADDRESS_MAP = {
+  11155111: {
+    // Sepolia
+    HIVE_TOKEN: "0xYOUR_NEW_TOKEN_ADDRESS",
+    STAKE_HIVE: "0xYOUR_NEW_FARM_ADDRESS",
+  },
+};
+```
+
+**After manual update:**
+
+```bash
+# 1. Restart frontend dev server
+cd frontend
+npm run dev
+
+# 2. Hard refresh browser (Ctrl+Shift+R)
+# 3. Reconnect MetaMask wallet
+# 4. Import new HIVE token address to MetaMask
+# 5. Transfer tokens to your account
+```
+
+---
+
+### 🧪 Running Tests
+
+Comprehensive test suite with 10+ tests:
+
+```bash
+# Run all tests
+npx hardhat test
+
+# Run specific test file
+npx hardhat test test/StakeHiveFarm.test.js
+
+# Run with gas reporting
+REPORT_GAS=true npx hardhat test
+```
+
+Test coverage includes:
+
+- ✅ Staking functionality
+- ✅ Reward calculations
+- ✅ Withdraw operations
+- ✅ Token transfers
+- ✅ Error handling
+- ✅ Edge cases
+
+---
+
+## 🎓 Usage Guide & Best Practices
+
+### Connecting Your Wallet
+
+1. **Ensure you're on Sepolia Testnet** in MetaMask
+2. Click **Connect Wallet** in the dApp
+3. The dApp automatically detects your network and loads correct addresses
+4. Browser console shows: `🔗 Connected to chain 11155111 (sepolia)`
+
+### Getting HIVE Tokens
+
+**If using pre-deployed contracts**: Request tokens by [opening an issue](https://github.com/Darahat/stakehive-dapp/issues) with your wallet address.
+
+**If you deployed your own**: Transfer tokens from the deployment account:
+
+```bash
+# Edit scripts/transfer-tokens.js with:
+# - recipientAddress: your wallet address
+# - hiveTokenAddress: your deployed token address
+# - transferAmount: amount to transfer (default: "10000")
+
+npx hardhat run scripts/transfer-tokens.js --network sepolia
+```
+
+### Importing HIVE Token to MetaMask
+
+1. Open MetaMask
+2. Go to **Assets** → **Import tokens**
+3. Enter the contract address (check console logs or `frontend/utils/contract.js`)
+4. Token Symbol: **HIVE**
+5. Decimals: **18**
+
+### Using StakeHive Features
+
+- **Staking**: Enter amount → Click Stake → Approve in MetaMask
+- **Claiming Rewards**: Navigate to Rewards → Click Claim → Approve transaction
+- **Withdrawing**: After lock period expires → Click Withdraw → Approve transaction
+- **Transferring**: Enter recipient address and amount → Click Transfer → Approve
+
+### Important Notes
+
+- **Gas Fees**: You need Sepolia ETH for all transactions. Get it from [Sepolia Faucet](https://sepoliafaucet.com/)
+- **Token Balances**: Displayed dynamically from blockchain, updated automatically
+- **Staking Limits**: Can only stake up to your current HIVE balance
+- **Lock Period**: Check staking dashboard for withdraw availability
+- **Real-Time Updates**: Vue watchers ensure UI reflects blockchain state automatically
+- **Transaction Confirmation**: All actions require MetaMask approval
 
 ---
 
@@ -287,74 +457,148 @@ npm run dev
 
 ---
 
-## 🔧 Managing Contract Addresses (For Developers)
+## 🔧 Developer Tools & Scripts
 
-> 📖 **Full Guide**: [docs/ADDRESS_MANAGEMENT.md](docs/ADDRESS_MANAGEMENT.md)
+### Available Scripts
 
-### Automated Deployment (Recommended)
+| Script           | Command                                                             | Description                                          |
+| ---------------- | ------------------------------------------------------------------- | ---------------------------------------------------- |
+| Deploy (Auto)    | `npx hardhat run scripts/deploy-and-update.js --network sepolia`    | **Recommended**: Deploys and auto-updates frontend   |
+| Deploy (Manual)  | `npx hardhat run scripts/deploy.js --network sepolia`               | Standard deployment (requires manual address update) |
+| Update Addresses | `node scripts/update-addresses.js <chainId> <tokenAddr> <farmAddr>` | Manually update frontend addresses                   |
+| Transfer Tokens  | `npx hardhat run scripts/transfer-tokens.js --network sepolia`      | Transfer HIVE to your wallet                         |
+| Run Tests        | `npx hardhat test`                                                  | Run full test suite                                  |
+| Start Frontend   | `cd frontend && npm run dev`                                        | Launch development server                            |
+| Build Frontend   | `cd frontend && npm run build`                                      | Production build                                     |
 
-Use the enhanced deployment script that automatically updates frontend addresses:
+### Project Structure
 
-```bash
-# Deploy and auto-update addresses
-npx hardhat run scripts/deploy-and-update.js --network sepolia
+```
+stakehive-dapp/
+├── contracts/              # Solidity smart contracts
+│   ├── HiveToken.sol      # ERC20 token with mint/burn
+│   └── StakeHiveFarm.sol  # Staking rewards contract
+├── scripts/               # Deployment and utility scripts
+│   ├── deploy-and-update.js   # Automated deployment ✅
+│   ├── deploy.js             # Manual deployment
+│   ├── update-addresses.js   # Address updater utility
+│   └── transfer-tokens.js    # Token transfer helper
+├── test/                  # Hardhat test suite
+│   └── StakeHiveFarm.test.js
+├── frontend/              # Nuxt 3 frontend
+│   ├── components/        # Vue components
+│   ├── pages/            # Route pages
+│   ├── stores/           # Pinia state management
+│   │   └── walletStore.js   # Wallet & blockchain logic
+│   ├── utils/
+│   │   └── contract.js      # Contract ABIs & addresses ⚠️
+│   └── plugins/
+│       └── web3.js          # Ethers.js setup
+├── hardhat.config.js     # Hardhat configuration
+├── .env.example          # Environment template
+└── .env                  # Your secrets (gitignored)
 ```
 
-This script will:
+### Key Files to Know
 
-1. Deploy both contracts
-2. Automatically update `frontend/utils/contract.js`
-3. Print next steps for you
+- **`frontend/utils/contract.js`**: Contains ADDRESS_MAP - update after deploying
+- **`frontend/stores/walletStore.js`**: Wallet connection and blockchain interactions
+- **`hardhat.config.js`**: Network configurations and compiler settings
+- **`.env`**: Your private key and RPC URLs (NEVER commit this!)
 
-### Manual Address Update
+### Debugging Tips
 
-If you need to update addresses manually:
+**Check browser console for logs:**
 
-```bash
-node scripts/update-addresses.js <chainId> <hiveTokenAddress> <stakeHiveFarmAddress>
+- `🔗 Connected to chain 11155111` - Network detected
+- `📍 Using addresses: {...}` - Addresses loaded for current chain
+- `💰 Fetching balance from HIVE token at: 0x...` - Balance query
+- `📊 Raw balance (wei): ...` - Retrieved balance before formatting
 
-# Example for Sepolia:
-node scripts/update-addresses.js 11155111 0x359863fB... 0x3531D47A...
-```
+**Common console errors and solutions:**
 
-### Understanding Address Management
-
-The dApp uses **dynamic address mapping** in `frontend/utils/contract.js`:
-
-```javascript
-export const ADDRESS_MAP = {
-  31337: {
-    /* Hardhat local addresses */
-  },
-  11155111: {
-    /* Sepolia addresses */
-  },
-};
-```
-
-When you connect your wallet, the dApp automatically:
-
-1. Detects your network's chain ID
-2. Loads the correct contract addresses for that chain
-3. Queries those contracts for balances and data
-
-**Why this matters:**
-
-- Running `deploy.js` creates NEW contracts with NEW addresses
-- Old addresses become invalid
-- You MUST update `ADDRESS_MAP` or use `deploy-and-update.js`
+- `❌ No contract code at 0x...` → Wrong network or address mismatch
+- `Error fetching token balance` → Check provider initialization
+- `Unknown Token` → Import token to MetaMask with correct address
 
 ---
 
-## ⚠️ Common Issues & Debugging Tips
+## ⚠️ Troubleshooting Guide
 
-- **"Unknown Token" in MetaMask**: You must manually add the HIVE token contract address in MetaMask to see the token and balance.
-- **"Available Balance: 0.00 HIVE" but MetaMask shows tokens**: Contract address mismatch. Check browser console for logs. Update MetaMask with current deployed address or redeploy using the old token address.
-- **Transaction Failures**: Check that you have enough test ETH for gas and the correct amount of HIVE tokens approved.
-- **BigNumber Issues**: Always convert inputs and amounts properly using `ethers.parseUnits(value, 18)` for token decimals.
-- **Wallet Not Detected**: The app shows a friendly prompt to install MetaMask with a helpful link.
-- **Error Handling**: All blockchain transactions are wrapped in try/catch with user-friendly status messages.
-- **Stale Contract Addresses**: After redeploying contracts, use `deploy-and-update.js` or manually update addresses in `frontend/utils/contract.js`.
+### 🔴 "Available Balance: 0.00 HIVE" but MetaMask shows tokens
+
+**Cause**: Contract address mismatch between MetaMask and frontend
+
+**Solution**:
+
+1. Open browser console (F12)
+2. Find log: `💰 Fetching balance from HIVE token at: 0x...`
+3. Compare with MetaMask token address
+4. **If different**, either:
+   - **Option A**: Update MetaMask with the address from console log
+   - **Option B**: Update `frontend/utils/contract.js` with MetaMask's address
+5. Restart frontend and hard refresh (Ctrl+Shift+R)
+6. Reconnect wallet
+
+### 🔴 "Unknown Token" in MetaMask
+
+**Solution**: Manually import the HIVE token:
+
+1. MetaMask → Assets → Import tokens
+2. Enter contract address (check console logs or `frontend/utils/contract.js`)
+3. Symbol: `HIVE`, Decimals: `18`
+
+### 🔴 Transaction Failures
+
+**Check these:**
+
+- ✅ Enough Sepolia ETH for gas? (Get from [faucet](https://sepoliafaucet.com/))
+- ✅ Enough HIVE tokens for the transaction?
+- ✅ Token approval granted for staking contract?
+- ✅ On correct network (Sepolia = Chain ID 11155111)?
+
+### 🔴 Frontend doesn't recognize deployed contracts
+
+**After deploying new contracts:**
+
+1. Verify addresses updated in `frontend/utils/contract.js`
+2. Restart frontend dev server
+3. Hard refresh browser (Ctrl+Shift+R)
+4. Reconnect MetaMask wallet
+5. Check console for correct addresses being loaded
+
+### 🔴 "Receiver must be an instance of class" error
+
+**Cause**: Using Pinia store proxy instead of actual ethers provider
+
+**Solution**: Already fixed in codebase. Update to latest version.
+
+### 🔴 Wallet not detected
+
+**Solution**:
+
+- Install [MetaMask](https://metamask.io/)
+- Refresh page after installation
+- Check if MetaMask is unlocked
+
+### 🔴 Contract deployment fails
+
+**Common causes:**
+
+- ❌ Missing or invalid `SEPOLIA_RPC_URL` in `.env`
+- ❌ Missing or invalid `PRIVATE_KEY` in `.env`
+- ❌ Not enough Sepolia ETH in deployment wallet
+- ❌ Network congestion (retry after a moment)
+
+### 💡 Best Practices
+
+1. ✅ **Always use `deploy-and-update.js`** for deployments
+2. ✅ **Test on local Hardhat first** before Sepolia
+3. ✅ **Check console logs** for debugging information
+4. ✅ **Document new addresses** after deployment
+5. ✅ **Transfer tokens to test accounts** after deployment
+6. ❌ **Never commit `.env`** file with private keys
+7. ❌ **Don't manually edit deployment scripts** unless you know what you're doing
 
 ---
 
