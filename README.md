@@ -1,5 +1,5 @@
 <div align="center">
-  <img src="https://raw.githubusercontent.com/Darahat/darahat/main/gitImages/stakehive-defi-dapp-netlify-app-06-05-2025_05_00_PM.png" alt="StakeHive Banner" width="800" height="400"/>
+  <img src="stakehive.png" alt="StakeHive Banner" width="800" height="400"/>
 </div>
 
 # 🚀 StakeHive — Enterprise-Grade DeFi Staking Protocol
