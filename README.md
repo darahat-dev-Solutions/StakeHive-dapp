@@ -1,5 +1,5 @@
 <div align="center">
-  <img src="stakehive.png" alt="StakeHive Banner" width="800" height="400"/>
+  <img src="stakehive.png" alt="StakeHive Banner" width="600" height="600"/>
 </div>
 
 # 🚀 StakeHive — Enterprise-Grade DeFi Staking Protocol
